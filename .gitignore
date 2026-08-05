@@ -1,0 +1,21 @@
+# --- Rust/Cargo Artifacts ---
+/target/
+
+# --- Environment & Configuration ---
+.env
+.env.local
+
+# --- Databases ---
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# --- OS & Editor Files ---
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# --- Rust analyer ---
+/.rust-analyzer*/
