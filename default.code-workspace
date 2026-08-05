@@ -26,7 +26,8 @@
             "vadimcn.vscode-lldb",
             "barbosshack.crates-io",
             "wheredoesyourmindgo.gruvbox-concoctis",
-            "drzix.hc-zenburn-vscode"
+            "drzix.hc-zenburn-vscode",
+            "bruno-api-client.bruno"
         ]
     }
 }

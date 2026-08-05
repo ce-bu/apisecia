@@ -17,7 +17,7 @@ struct Args {
     force_migrate: bool,
 
     /// Explicitly override the server binding port
-    #[arg(short = 'p', long = "port", default_value = "3000")]
+    #[arg(short = 'p', long = "port", default_value = "4567")]
     port: u16,
 
     /// Database connection URL (Falls back to DATABASE_URL env var)
@@ -39,13 +39,10 @@ struct Args {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // 1. Load local .env file first so Clap can parse those fallback keys
     dotenvy::dotenv().ok();
 
-    // 2. Parse Terminal Arguments (Reads flags, env vars, or standard defaults)
     let args = Args::parse();
 
-    // 3. Initialize the Advanced Tracing Engine using Clap's processed log level
     tracing_subscriber::registry()
         .with(
             tracing_subscriber::EnvFilter::try_new(&args.log_level)
@@ -55,54 +52,49 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .init();
 
     info!("Initializing Apisecia server subsystem...");
-    info!(log_level = %args.log_level, "Active tracing configuration successfully deployed");
 
-    // 4. Establish Connected Database Pool
-    info!("Connecting to PostgreSQL cluster resource...");
-    let pool = match PgPoolOptions::new()
-        .max_connections(5)
-        .acquire_timeout(std::time::Duration::from_secs(3))
-        .connect(&args.database_url)
-        .await
-    {
-        Ok(p) => {
-            info!("Database connection pool established successfully.");
-            p
-        }
-        Err(e) => {
-            error!("Failed to establish database connection: {}", e);
-            return Err(e.into());
-        }
-    };
+    /*
+           info!("Connecting to PostgreSQL cluster resource...");
+           let pool = match PgPoolOptions::new()
+               .max_connections(5)
+               .acquire_timeout(std::time::Duration::from_secs(3))
+               .connect(&args.database_url)
+               .await
+           {
+               Ok(p) => {
+                   info!("Database connection pool established successfully.");
+                   p
+               }
+               Err(e) => {
+                   error!("Failed to establish database connection: {}", e);
+                   return Err(e.into());
+               }
+           };
 
-    // 5. Conditional Startup Migration Logic
-    if args.force_migrate {
-        warn!("⚠️  Force-migrate flag (-f) detected. Checking and applying database schemas...");
-        match sqlx::migrate!("./migrations").run(&pool).await {
-            Ok(_) => info!("Database schemas are fully updated and synchronized."),
-            Err(e) => {
-                error!("Critical migration phase breakdown: {}", e);
-                return Err(e.into());
-            }
-        }
-    } else {
-        info!("Skipping boot-time database migrations (run with -f to enable).");
-    }
 
-    // 6. Build Axum Routes and attach Tower Middleware
-    let app = axum::Router::new()
-        .route("/health", axum::routing::get(|| async { "OK" }))
-        .layer(TraceLayer::new_for_http())
-        .with_state(pool);
+           if args.force_migrate {
+               warn!("⚠️  Force-migrate flag (-f) detected. Checking and applying database schemas...");
+               match sqlx::migrate!("./migrations").run(&pool).await {
+                   Ok(_) => info!("Database schemas are fully updated and synchronized."),
+                   Err(e) => {
+                       error!("Critical migration phase breakdown: {}", e);
+                       return Err(e.into());
+                   }
+               }
+           } else {
+               info!("Skipping boot-time database migrations (run with -f to enable).");
+           }
 
-    // 7. Bind Infrastructure Listener
+       let app = axum::Router::new()
+           .route("/health", axum::routing::get(|| async { "OK" }))
+           .layer(TraceLayer::new_for_http())
+           .with_state(pool);
+    */
+
     let addr = format!("127.0.0.1:{}", args.port);
     let listener = tokio::net::TcpListener::bind(&addr).await?;
 
-    // Explicitly expose the raw address text clearly
-    let health_url = format!("http://localhost:{}/health", args.port);
-
-    info!(health = %health_url, "Axum listener successfully bound");
+    info!("axum server listen at", addr = %addr);
 
     axum::serve(listener, app).await?;
 
