@@ -1,8 +1,10 @@
 use clap::Parser;
-use sqlx::postgres::PgPoolOptions;
-use tower_http::trace::TraceLayer;
-use tracing::{error, info, warn};
+use tracing::info;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+
+use crate::app::create_app;
+
+mod app;
 
 // Define command line arguments with environment variable fallbacks
 #[derive(Parser, Debug)]
@@ -91,10 +93,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
            .with_state(pool);
     */
 
+    let app = create_app();
+
     let addr = format!("127.0.0.1:{}", args.port);
     let listener = tokio::net::TcpListener::bind(&addr).await?;
 
-    info!("axum server listen at", addr = %addr);
+    info!("axum server listen at {}", addr);
 
     axum::serve(listener, app).await?;
 
